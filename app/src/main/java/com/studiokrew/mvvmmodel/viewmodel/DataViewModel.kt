@@ -11,12 +11,10 @@ import retrofit2.Callback
 import retrofit2.Response
 
 class DataViewModel(private val repository:RandomRepo = RandomRepo(apiService = ApiClient.apiService)):ViewModel() {
-    private var _data = MutableLiveData<ApiDataModal>()
-    private var _toastString = MutableLiveData<String>()
+    private var _data = MutableLiveData<ScreenState<ApiDataModal>>()
 
-    val data:LiveData<ApiDataModal> get() = _data
+    val data:LiveData<ScreenState<ApiDataModal>> get() = _data
 
-    val toastString:LiveData<String> get() = _toastString
 
     init {
         fetchData()
@@ -24,15 +22,16 @@ class DataViewModel(private val repository:RandomRepo = RandomRepo(apiService = 
 
     private fun fetchData(){
         val call = repository.getCharacters()
+        _data.postValue(ScreenState.Loading(null))
         call.enqueue(object : Callback<ApiDataModal>{
             override fun onResponse(call: Call<ApiDataModal>, response: Response<ApiDataModal>) {
                 if(response.isSuccessful){
-                    _data.postValue(response.body())
+                    _data.postValue(ScreenState.Success(response.body()))
                 }
             }
 
             override fun onFailure(call: Call<ApiDataModal>, t: Throwable) {
-                _toastString.postValue(t.message.toString())
+                _data.postValue(ScreenState.Error(t.message.toString(), null))
             }
         })
     }
